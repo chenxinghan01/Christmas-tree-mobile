@@ -1,0 +1,1271 @@
+<!--想玩就行修改不容易，by别改了😢-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>圣诞树-Christmas tree </title>
+    <link href="https://fonts.googleapis.cn/css2?family=Cinzel:wght@400;700&family=Great+Vibes&display=swap"
+          rel="stylesheet">
+    <link href="https://fonts.googleapis.cn/css2?family=Segoe+UI&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000000;
+            font-family: 'Segoe UI', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        #ui-panel {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 280px;
+            max-height: 70vh;
+            overflow-y: auto;
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.06) 0, transparent 55%),
+                linear-gradient(145deg, rgba(15,15,25,0.98), rgba(8,8,16,0.98));
+            backdrop-filter: blur(18px);
+            padding: 20px;
+            border-radius: 16px;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75);
+            z-index: 100;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        @media (max-width: 600px) {
+            #ui-panel {
+                width: 85%;
+                right: 50%;
+                transform: translateX(50%);
+                top: 70px;
+            }
+
+            #ui-panel.hidden {
+                transform: translateX(200%);
+            }
+        }
+
+        @media (min-width: 601px) {
+            #ui-panel.hidden {
+                transform: translateX(130%);
+            }
+        }
+
+        .panel-title {
+            margin: 0 0 15px 0;
+            color: #ffd700;
+            font-size: 18px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group {
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .control-group:last-of-type {
+            margin-bottom: 4px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 6px;
+        }
+
+        .panel-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            cursor: pointer;
+            border-radius: 999px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        }
+
+        .panel-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+        }
+
+        select {
+            width: 100%;
+            padding: 9px 10px;
+            background: rgba(15,15,25,0.9);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #fff;
+            border-radius: 999px;
+            outline: none;
+            font-size: 13px;
+        }
+
+        #toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            background: radial-gradient(circle at 30% 0%, #ffe27a 0, #ffb347 30%, #3b2b68 80%);
+            border-radius: 50%;
+            color: #2d1b00;
+            border: 1px solid rgba(255, 215, 0, 0.5);
+            cursor: pointer;
+            z-index: 101;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
+
+        #toggle-btn:hover {
+            transform: rotate(90deg) translateY(-1px);
+            box-shadow: 0 12px 26px rgba(0,0,0,0.75);
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: #ffd700;
+            cursor: pointer;
+            height: 20px;
+        }
+
+        
+        #upload-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.08) 0, transparent 55%),
+                rgba(0, 0, 0, 0.55);
+            z-index: 300;
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 110px;
+            font-family: 'Segoe UI', "Microsoft YaHei", sans-serif;
+        }
+
+        #upload-alert.visible {
+            display: flex;
+            animation: dropIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes dropIn {
+            from {
+                transform: translateY(-16px) scale(0.96);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .alert-box {
+            width: 86%;
+            max-width: 360px;
+            padding: 18px 18px 16px;
+            border-radius: 16px;
+            background:
+                linear-gradient(135deg, rgba(15,15,25,0.97), rgba(10,20,35,0.97));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8);
+            color: #fdfdfd;
+            position: relative;
+            backdrop-filter: blur(20px);
+        }
+
+        .alert-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #ffe082;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .alert-title::before {
+            content: "🎄";
+            font-size: 18px;
+        }
+
+        .alert-content {
+            font-size: 13px;
+            color: #e0e0e0;
+            margin-bottom: 18px;
+            line-height: 1.6;
+        }
+
+        .alert-btn-wrapper {
+            text-align: right;
+        }
+
+        .alert-btn {
+            background: linear-gradient(90deg, #ffd700, #ff9900);
+            color: #2a1800;
+            border: none;
+            padding: 7px 24px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+            transition: transform 0.18s, box-shadow 0.18s, filter 0.18s;
+        }
+
+        .alert-btn:hover {
+            filter: brightness(1.05);
+            box-shadow: 0 9px 22px rgba(0,0,0,0.75);
+        }
+
+        .alert-btn:active {
+            transform: scale(0.96) translateY(1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.7);
+        }
+
+        #welcome-screen {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at top, rgba(255,255,255,0.12) 0, transparent 55%),
+                linear-gradient(135deg, #0b1020 0%, #190814 45%, #050608 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 500;
+            color: #fff;
+            font-family: "Microsoft YaHei", sans-serif;
+            transition: opacity 0.5s ease;
+        }
+
+        #welcome-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-card {
+            width: 90%;
+            max-width: 420px;
+            background: rgba(10,10,20,0.95);
+            border-radius: 18px;
+            padding: 24px 20px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.08);
+            text-align: center;
+        }
+
+        .welcome-avatar {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            padding: 3px;
+            background: conic-gradient(from 210deg, #ffd700, #ff7b00, #ff4b6e, #ffd700);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        .welcome-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: block;
+            object-fit: cover;
+        }
+
+        .welcome-title {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-sub {
+            font-size: 13px;
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .welcome-tip {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 16px;
+        }
+
+        #welcome-enter-btn {
+            width: 100%;
+            padding: 11px;
+            border-radius: 999px;
+            border: none;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(90deg,#ffd700,#ff9900);
+            color: #2a1800;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+
+
+        #photo-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            --tree-x: 50%;
+            --tree-y: 58%;
+            transform: translate(var(--tree-x), var(--tree-y)) scale(0.05) rotate(5deg);
+            max-width: 90vw;
+            max-height: 70vh;
+            background: #fff;
+            padding: 8px 8px 30px 8px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 4px;
+            transition:
+                transform 0.6s cubic-bezier(0.22, 0.72, 0.22, 1.1),
+                opacity 0.6s ease-out;
+            transform-origin: center center;
+        }
+
+        #photo-modal.active {
+            pointer-events: auto;
+        }
+
+        #photo-modal.state-hidden {
+            transform: translate(var(--tree-x), var(--tree-y)) scale(0.05) rotate(5deg);
+            opacity: 0;
+        }
+
+        #photo-modal.state-front {
+            transform: translate(50vw, 50vh) translate(-50%, -50%) scale(1) rotate(-3deg);
+            opacity: 1;
+        }
+
+        #photo-modal img {
+            max-width: 100%;
+            max-height: 50vh;
+            display: block;
+            border: 1px solid #eee;
+            margin: 0 auto;
+        }
+
+        #photo-caption {
+            text-align: center;
+            color: #333;
+            font-family: 'Great Vibes', cursive;
+            font-size: 1.8rem;
+            margin-top: 10px;
+        }
+    
+.welcome-footer-copyright {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    background: linear-gradient(90deg, #ff0000, #00cc00);
+    -webkit-background-clip: text;
+    color: transparent;
+    font-weight: bold;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    letter-spacing: 1px;
+}
+</style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://testingcf.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://testingcf.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+
+<div id="upload-alert">
+    <div class="alert-box">
+        <div class="alert-title">此页面提示</div>
+        <div class="alert-content" id="alert-msg">操作成功</div>
+        <div class="alert-btn-wrapper">
+            <button class="alert-btn"
+                    onclick="document.getElementById('upload-alert').classList.remove('visible')">
+                确定
+            </button>
+        </div>
+    </div>
+</div>
+
+<!--by chenxinghan-->
+<div id="welcome-screen">
+    <div class="welcome-card">
+        <div class="welcome-avatar">
+            <img
+            src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAIAAfgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDaV5B/FU0c0g/iqHI9aNw9a6zIvR3Ug/iqUXsn96szeB3pPMHrQBrLdMepp3nk96yo5PerUb1BBc8zNAY+uKiQ5qQDNADw7f8APTFL5j/89P1qKigaRL5j/wDPT9aPNcf8tDUVFBViT7RKOkpo+0zf89GqOigCT7TN/wA9Go+0zf8APRqjooAmFzN/z0al+0zf89GqHdRuoAm+0zf89Go+0zf89GqHdRuoAm+0zf8APRqPtM3/AD0aod1G6gCb7TN/z0aj7TN/z0aod1G6gCb7RL/z0aj7RL/z0aogaKggl+0S/wDPRqctxLj/AFhqDNAfFAE/2iX/AJ6NR9ol/wCejVDvo30AT/apf+ehpRdSd3NV99G+gCyLqQfxk04XkgH3qpeZR5lAF77bJ/epft8g6GqHmUeZQBObiXtLJ/321H2iX/nrJ/321QZozQBP9ol/56yf99tQLmX/AJ6v/wB9GoM0ZoAsC7kH8R/GnC+lH8Rqrupd1AFsahKP4jTl1GX1qluo3UAX/t0h7j8qPtr+o/KqG+jfVgX/ALa/qPypPtr46/pVHfRvoAstcE96jMpPeo800k0APL+9N3U2igBd+KN2abkCjPtQAuaXdTeaMH1oAk3+9NLGm496bz60AP3e9JvNMx70maAJvNo8z1qAtjvTd9AFpXGaKgV6KAM0xmo2UipqYVJ71RZAcio8nNWDET3pv2c0wHQ5q7FVeKIjtVuJMVBBPH0qUZxUUYqUHFACUUu6jdQWhKKXdRmgvoJRRRQQFFFFABRRRQAUUUUAFFFFABRRRQA+im7qMmoIAmkoooAKM0U2gBd1G6m0UALkelHFOooAbxRxTqKAE49aOPWlooATj1o49aWigAooooAKKKKAEz7UZ9qWirATPtRn2paKADccUnNLSE0AJ+NJRRTsAUucU3mgA0WAcDRupBRTsAuaQ07AptFgEzTe1PxSFeDRYCFjgGog3NSSL1qEDBqQLCHiimxniigCvikNLSHpSQDVHJqeMcVEo5qxGOKtAOVetSoOtNA9akUVIDlHWg9aUcU09aAHUUUVABRRRQAylXrSUq9aAHUUUUAFFFFABRRRQAUUUUAFFFFABRTKUUAOopAMZpaACk20tFADdtLtpaKACiiigAooooAKKKKACiiigAooooAKKKKACiiimgCiiitEAUYoopgN20Yp1NJoASlAzQOKUNQAm2l20tFADKKKKACiiigBjLnNV2XBq0RwagfrUgIg6iilj6mipuBXooopIBUHNWYxxVePqatRVogHgYp6jFIo606pAKbTqZQA+iiioAKKKKAGUq9aSlXrQA6iiigAooooAKKKKACiiigAooooAMUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFNAFFFFaIAop9NIoAaelNp9N9aYCUUUUAFFIpoyfSgBaKKKACiiigA7GoXHNTdjUTipYDUHWilj6mipsBTpQc0lHSmBIverERqspqeI0AWk6U40xKdQAhpBxmikoAKKKKgAooooAKKKKACiilxQA6iiigAoooo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">
+        
+    <div class="welcome-footer-copyright">
+        by cxh
+    </div>
+</div>
+        <div class="welcome-title">🎄 嗨，欢迎来到圣诞树回忆空间</div>
+        <div class="welcome-sub">
+            这里会把你的照片挂在 3D 圣诞树上，<br>
+            点击「开启启动」后，圣诞树会旋转、爆炸，<br>
+            一张一张把回忆“捏出来”再放回去。
+        </div>
+        <div class="welcome-tip">
+            进入后，可以在右上角齿轮打开控制面板，<br>
+            导入照片、调节爆炸速度、方向、全屏等选项。
+        </div>
+        <div class="welcome-tip">如果点不了进入，请你复制到浏览器使用</div>
+        <button id="welcome-enter-btn">🚀开始进入</button>
+    </div>
+</div>
+
+
+<button id="toggle-btn">⚙️</button>
+
+
+<div id="ui-panel">
+    <div class="panel-title">🎄 控制面板</div>
+
+    <div class="control-group">
+        <label>场景风格</label>
+        <select id="bg-select">
+            <option value="black">🌌 纯黑 (Black)</option>
+            <option value="deep">🌃 深邃 (Deep Blue)</option>
+            <option value="warm">🔥 暖冬 (Warm)</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>背景音乐</label>
+        <button class="panel-btn" onclick="document.getElementById('music-input').click()">
+            📁 导入音乐 (MP3)
+        </button>
+        <input type="file" id="music-input" accept="audio/*" style="display:none;">
+
+        <div style="display:flex; gap:10px; margin-top:5px; align-items: center;">
+            <button id="btn-play-pause" class="panel-btn" style="width:40px; margin-bottom:0;">⏸</button>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.6">
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label>照片管理</label>
+        <button class="panel-btn"
+                style="background:linear-gradient(90deg, #00b894, #00cec9); color:black; font-weight:bold;"
+                onclick="document.getElementById('file-input').click()">
+            📷 导入照片 (多选)
+        </button>
+        <input type="file" id="file-input" multiple accept="image/*" style="display:none;">
+    </div>
+
+    <div class="control-group">
+        <label>爆炸旋转方向</label>
+        <select id="rotate-direction">
+            <option value="1">顺时针</option>
+            <option value="-1">逆时针</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>爆炸旋转速度</label>
+        <input type="range" id="rotate-speed" min="0.2" max="3" step="0.1" value="1.2">
+    </div>
+
+    <div class="control-group">
+        <label>每张照片停留时间 (秒)</label>
+        <input type="range" id="photo-duration-slider" min="1" max="5" step="0.5" value="2">
+        <div style="font-size:12px;color:#aaa;margin-top:4px;">
+            当前：<span id="photo-duration-label">2.0 秒</span>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label>
+            <input type="checkbox" id="fullscreen-checkbox">
+            开启启动时自动全屏
+        </label>
+    </div>
+
+    <div class="control-group">
+        <button id="btn-start-show"
+                class="panel-btn"
+                style="background:linear-gradient(90deg,#ffd700,#ff9900); color:black; font-weight:bold;">
+            🚀 启动
+        </button>
+    </div>
+
+    <div style="font-size:10px; color:#888; text-align:center; margin-top:6px;">
+        先导入照片，再点击「开启启动」：圣诞树旋转 3 秒后爆炸并轮播回忆照片
+    </div>
+</div>
+
+<div id="canvas-container"></div>
+
+<div id="photo-modal" class="state-hidden">
+    <img id="modal-img" src="" alt="Memory">
+    <div id="photo-caption">Sweet Memory</div>
+</div>
+
+<script type="module">
+    import * as THREE from 'three';
+    import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+    import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+    import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+
+    const CONFIG = {
+        colors: {
+            bg: 0x000000,
+            champagneGold: 0xffd966,
+            deepGreen: 0x03180a,
+            accentRed: 0x990000
+        },
+        particles: {
+            count: 1500,
+            dustCount: 2500,
+            treeHeight: 24,
+            treeRadius: 8
+        },
+        camera: {z: 50},
+        photoInterval: 2.5,
+        photoExitDuration: 0.6
+    };
+
+    const CTRL = {
+        rotateSpeed: 1.2,
+        rotateDir: 1
+    };
+
+    const STATE = {
+        mode: 'TREE',
+        isModalActive: false,
+        rotationSpeedY: 0,
+        sequenceRunning: false
+    };
+
+    let scene, camera, renderer, composer, mainGroup, clock = new THREE.Clock();
+    let particleSystem = [];
+    let photoMeshGroup = new THREE.Group();
+    let caneTexture, loadedImageUrls = [], audioEl, snowSystem;
+
+    let sequenceTimer = 0;
+    let photoTimer = 0;
+    let currentImageIndex = -1;
+    let imagesShownCount = 0;
+    let photoReturnStarted = false;
+
+    function showAlert(msg) {
+        const alertBox = document.getElementById('upload-alert');
+        const alertMsg = document.getElementById('alert-msg');
+        alertMsg.innerText = msg;
+        alertBox.classList.add('visible');
+    }
+
+    async function init() {
+        initThree();
+        setupEnvironment();
+        setupLights();
+        createTextures();
+        createParticles();
+        createDust();
+        createSnow();
+        setupPostProcessing();
+        initAudio();
+        setupUI();
+        animate();
+    }
+
+    function initAudio() {
+        audioEl = new Audio();
+        audioEl.crossOrigin = "anonymous";
+        audioEl.src = "https://thirdparty.gtimg.com/C1000007bNrR1HXkjD.m4a?fromtag=38";
+        audioEl.loop = true;
+        audioEl.volume = 0.6;
+    }
+
+    function setupUI() {
+        const panel = document.getElementById('ui-panel');
+        const toggleBtn = document.getElementById('toggle-btn');
+        toggleBtn.style.display = 'flex';
+
+        const welcome = document.getElementById('welcome-screen');
+        const enterBtn = document.getElementById('welcome-enter-btn');
+        if (welcome && enterBtn) {
+            enterBtn.addEventListener('click', () => {
+                welcome.classList.add('hidden');
+                setTimeout(() => {
+                    welcome.style.display = 'none';
+                }, 550);
+            });
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            panel.classList.toggle('hidden');
+            if (window.innerWidth < 600) {
+                panel.style.transform = panel.classList.contains('hidden')
+                    ? "translateX(200%)"
+                    : "translateX(50%)";
+            } else {
+                panel.style.transform = "";
+            }
+        });
+
+        document.getElementById('bg-select').addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val === 'black') scene.background = new THREE.Color(0x000000);
+            else if (val === 'deep') scene.background = new THREE.Color(0x0a1020);
+            else if (val === 'warm') scene.background = new THREE.Color(0x1a0a0a);
+            scene.fog = new THREE.FogExp2(scene.background, 0.01);
+        });
+
+        document.getElementById('music-input').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                audioEl.src = URL.createObjectURL(e.target.files[0]);
+                audioEl.play().then(() => {
+                    document.getElementById('btn-play-pause').innerText = "⏸";
+                    showAlert("导入音乐成功");
+                }).catch(() => {
+                    showAlert("导入音乐成功，如需播放请手动点击 ⏸ 按钮");
+                });
+            }
+        });
+
+        document.getElementById('btn-play-pause').addEventListener('click', () => {
+            if (audioEl.paused) {
+                audioEl.play().then(() => {
+                    document.getElementById('btn-play-pause').innerText = "⏸";
+                }).catch(() => {
+                    showAlert("当前浏览器禁止自动播放，请先与页面交互再试一次");
+                });
+            } else {
+                audioEl.pause();
+                document.getElementById('btn-play-pause').innerText = "▶";
+            }
+        });
+
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            audioEl.volume = e.target.value;
+        });
+
+        document.getElementById('file-input').addEventListener('change', handleImageUpload);
+
+        document.getElementById('rotate-direction').addEventListener('change', (e) => {
+            const v = parseFloat(e.target.value);
+            CTRL.rotateDir = isNaN(v) ? 1 : v;
+        });
+
+        document.getElementById('rotate-speed').addEventListener('input', (e) => {
+            const v = parseFloat(e.target.value);
+            CTRL.rotateSpeed = isNaN(v) ? 1.2 : v;
+        });
+
+        const photoDurationSlider = document.getElementById('photo-duration-slider');
+        const photoDurationLabel = document.getElementById('photo-duration-label');
+        if (photoDurationSlider && photoDurationLabel) {
+            const initStay = Math.max(0.5, CONFIG.photoInterval - CONFIG.photoExitDuration);
+            photoDurationSlider.value = initStay.toFixed(1);
+            photoDurationLabel.textContent = initStay.toFixed(1) + ' 秒';
+
+            photoDurationSlider.addEventListener('input', (e) => {
+                let stay = parseFloat(e.target.value);
+                if (isNaN(stay)) stay = initStay;
+                if (stay < 0.5) stay = 0.5;
+                CONFIG.photoInterval = stay + CONFIG.photoExitDuration;
+                photoDurationLabel.textContent = stay.toFixed(1) + ' 秒';
+            });
+        }
+
+        document.getElementById('btn-start-show').addEventListener('click', handleStartShow);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'h') {
+                panel.classList.add('hidden');
+                toggleBtn.style.display =
+                    toggleBtn.style.display === 'none' ? 'flex' : 'none';
+            }
+        });
+    }
+
+    function handleStartShow() {
+        if (loadedImageUrls.length === 0) {
+            showAlert("你没有导入图片，请导入图片后再启动");
+            return;
+        }
+        if (STATE.sequenceRunning) return;
+
+        const fsCheck = document.getElementById('fullscreen-checkbox');
+        if (fsCheck && fsCheck.checked && !document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+
+        const panel = document.getElementById('ui-panel');
+        panel.classList.add('hidden');
+        if (window.innerWidth < 600) {
+            panel.style.transform = "translateX(200%)";
+        }
+
+        document.getElementById('toggle-btn').style.display = 'none';
+
+        STATE.sequenceRunning = true;
+        STATE.mode = 'TREE';
+        sequenceTimer = 0;
+        photoTimer = 0;
+        imagesShownCount = 0;
+        currentImageIndex = -1;
+        photoReturnStarted = false;
+
+        const modal = document.getElementById('photo-modal');
+        modal.classList.add('state-hidden');
+        modal.classList.remove('state-front');
+        modal.classList.remove('active');
+        STATE.isModalActive = false;
+    }
+
+    function endSequence() {
+        STATE.sequenceRunning = false;
+        STATE.mode = 'TREE';
+        sequenceTimer = 0;
+        photoTimer = 0;
+        currentImageIndex = -1;
+        photoReturnStarted = false;
+
+        const modal = document.getElementById('photo-modal');
+        if (STATE.isModalActive) {
+            hidePhotoToTree(modal);
+            setTimeout(() => {
+                modal.classList.remove('active');
+                STATE.isModalActive = false;
+            }, CONFIG.photoExitDuration * 1000 + 50);
+        }
+
+        document.getElementById('toggle-btn').style.display = 'flex';
+    }
+
+    function initThree() {
+        const container = document.getElementById('canvas-container');
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(CONFIG.colors.bg);
+        scene.fog = new THREE.FogExp2(CONFIG.colors.bg, 0.01);
+
+        camera = new THREE.PerspectiveCamera(
+            42,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        adjustCameraPosition();
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance"
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.toneMappingExposure = 2.2;
+
+        container.appendChild(renderer.domElement);
+
+        mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+    }
+
+    function adjustCameraPosition() {
+        const isPortrait = window.innerHeight > window.innerWidth;
+        camera.position.set(0, 2, isPortrait ? 85 : 50);
+    }
+
+    function setupEnvironment() {
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    }
+
+    function setupLights() {
+        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambient);
+
+        const innerLight = new THREE.PointLight(0xffaa00, 2, 20);
+        innerLight.position.set(0, 5, 0);
+        mainGroup.add(innerLight);
+
+        const spotGold = new THREE.SpotLight(0xffcc66, 1200);
+        spotGold.position.set(30, 40, 40);
+        spotGold.angle = 0.5;
+        spotGold.penumbra = 0.5;
+        scene.add(spotGold);
+
+        const spotBlue = new THREE.SpotLight(0x6688ff, 600);
+        spotBlue.position.set(-30, 20, -30);
+        scene.add(spotBlue);
+
+        const fill = new THREE.DirectionalLight(0xffeebb, 0.8);
+        fill.position.set(0, 0, 50);
+        scene.add(fill);
+    }
+
+    function setupPostProcessing() {
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5,
+            0.4,
+            0.85
+        );
+        bloomPass.threshold = 0.7;
+        bloomPass.strength = 0.45;
+        bloomPass.radius = 0.4;
+
+        composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+    }
+
+    function createTextures() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 128, 128);
+        ctx.fillStyle = '#880000';
+        ctx.beginPath();
+        for (let i = -128; i < 256; i += 32) {
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i + 32, 128);
+            ctx.lineTo(i + 16, 128);
+            ctx.lineTo(i - 16, 0);
+        }
+        ctx.fill();
+        caneTexture = new THREE.CanvasTexture(canvas);
+        caneTexture.wrapS = THREE.RepeatWrapping;
+        caneTexture.wrapT = THREE.RepeatWrapping;
+        caneTexture.repeat.set(3, 3);
+    }
+
+    class Particle {
+        constructor(mesh, type, isDust = false) {
+            this.mesh = mesh;
+            this.type = type;
+            this.isDust = isDust;
+            this.posTree = new THREE.Vector3();
+            this.posScatter = new THREE.Vector3();
+            this.baseScale = mesh.scale.x;
+            this.swayPhase = Math.random() * Math.PI * 2;
+            this.calculatePositions();
+
+            if (this.type === 'PHOTO') {
+                this.initialAngleY = Math.atan2(this.posTree.x, this.posTree.z);
+                this.mesh.rotation.y = this.initialAngleY;
+            }
+        }
+
+        calculatePositions() {
+            const h = CONFIG.particles.treeHeight;
+            const halfH = h / 2;
+            let t = Math.random();
+            t = Math.pow(t, 0.8);
+            const y = (t * h) - halfH;
+
+            let rMax = CONFIG.particles.treeRadius * (1.0 - t);
+            if (rMax < 0.5) rMax = 0.5;
+
+            const angle = t * 50 * Math.PI + Math.random() * Math.PI;
+            const r = rMax * (0.8 + Math.random() * 0.4);
+            this.posTree.set(Math.cos(angle) * r, y, Math.sin(angle) * r);
+
+            let rScatter = this.isDust ? (12 + Math.random() * 20) : (8 + Math.random() * 12);
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            this.posScatter.set(
+                rScatter * Math.sin(phi) * Math.cos(theta),
+                rScatter * Math.sin(phi) * Math.sin(theta),
+                rScatter * Math.cos(phi)
+            );
+        }
+
+        update(dt, mode, time) {
+            let target = (mode === 'SCATTER') ? this.posScatter : this.posTree;
+            this.mesh.position.lerp(target, 2.0 * dt);
+
+            if (this.type === 'PHOTO') {
+                this.mesh.rotation.y = this.initialAngleY +
+                    Math.sin(time * 0.5 + this.swayPhase) * 0.05;
+
+                if (mode === 'TREE') {
+                    this.mesh.rotation.z =
+                        Math.sin(time * 1.5 + this.swayPhase) * 0.08;
+                } else if (mode === 'SCATTER') {
+                    const tilt = Math.max(Math.min(-STATE.rotationSpeedY * 0.5, 0.8), -0.8);
+                    this.mesh.rotation.z =
+                        THREE.MathUtils.lerp(this.mesh.rotation.z, tilt, dt * 5);
+                }
+            } else if (mode === 'SCATTER') {
+                this.mesh.rotation.x += dt;
+                this.mesh.rotation.y += dt;
+            } else {
+                this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, 0, dt);
+                this.mesh.rotation.y += 0.5 * dt;
+            }
+
+            let s = this.baseScale;
+            if (this.isDust) {
+                s = this.baseScale *
+                    (0.8 + 0.4 * Math.sin(time * 4 + this.mesh.id));
+                if (mode === 'TREE') s = 0;
+            } else if (mode === 'TREE' && this.type === 'PHOTO') {
+                s = this.baseScale * 1.5;
+            } else if (mode === 'SCATTER' && this.type === 'PHOTO') {
+                s = this.baseScale * 2;
+            }
+            this.mesh.scale.lerp(new THREE.Vector3(s, s, s), 4 * dt);
+        }
+    }
+
+    function createParticles() {
+        const sphereGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        const boxGeo = new THREE.BoxGeometry(0.55, 0.55, 0.55);
+
+        const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, -0.5, 0),
+            new THREE.Vector3(0, 0.3, 0),
+            new THREE.Vector3(0.1, 0.5, 0),
+            new THREE.Vector3(0.3, 0.4, 0)
+        ]);
+        const candyGeo = new THREE.TubeGeometry(curve, 16, 0.08, 8, false);
+
+        const goldMat = new THREE.MeshStandardMaterial({
+            color: CONFIG.colors.champagneGold,
+            metalness: 1.0,
+            roughness: 0.1,
+            envMapIntensity: 2.0
+        });
+        const greenMat = new THREE.MeshStandardMaterial({
+            color: CONFIG.colors.deepGreen,
+            metalness: 0.2,
+            roughness: 0.8
+        });
+        const redMat = new THREE.MeshPhysicalMaterial({
+            color: CONFIG.colors.accentRed,
+            metalness: 0.3,
+            roughness: 0.2,
+            clearcoat: 1.0
+        });
+        const candyMat = new THREE.MeshStandardMaterial({
+            map: caneTexture,
+            roughness: 0.4
+        });
+
+        for (let i = 0; i < CONFIG.particles.count; i++) {
+            const rand = Math.random();
+            let mesh, type;
+            if (rand < 0.40) {
+                mesh = new THREE.Mesh(boxGeo, greenMat);
+                type = 'BOX';
+            } else if (rand < 0.70) {
+                mesh = new THREE.Mesh(boxGeo, goldMat);
+                type = 'GOLD_BOX';
+            } else if (rand < 0.92) {
+                mesh = new THREE.Mesh(sphereGeo, goldMat);
+                type = 'GOLD_SPHERE';
+            } else if (rand < 0.97) {
+                mesh = new THREE.Mesh(sphereGeo, redMat);
+                type = 'RED';
+            } else {
+                mesh = new THREE.Mesh(candyGeo, candyMat);
+                type = 'CANE';
+            }
+
+            const s = 0.4 + Math.random() * 0.5;
+            mesh.scale.set(s, s, s);
+            mesh.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+
+            mainGroup.add(mesh);
+            particleSystem.push(new Particle(mesh, type, false));
+        }
+
+        const starGeo = new THREE.OctahedronGeometry(1.2, 0);
+        const starMat = new THREE.MeshStandardMaterial({
+            color: 0xffdd88,
+            emissive: 0xffaa00,
+            emissiveIntensity: 1.0
+        });
+        const star = new THREE.Mesh(starGeo, starMat);
+        star.position.set(0, CONFIG.particles.treeHeight / 2 + 1.2, 0);
+        mainGroup.add(star);
+        mainGroup.add(photoMeshGroup);
+    }
+
+    function createDust() {
+        const geo = new THREE.TetrahedronGeometry(0.08);
+        const mat = new THREE.MeshBasicMaterial({
+            color: 0xffeebb,
+            transparent: true,
+            opacity: 0.8
+        });
+        for (let i = 0; i < CONFIG.particles.dustCount; i++) {
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.scale.setScalar(0.5 + Math.random());
+            mainGroup.add(mesh);
+            particleSystem.push(new Particle(mesh, 'DUST', true));
+        }
+    }
+
+    function createSnow() {
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
+        for (let i = 0; i < 1500; i++) {
+            vertices.push(
+                THREE.MathUtils.randFloatSpread(200),
+                THREE.MathUtils.randFloat(0, 150),
+                THREE.MathUtils.randFloatSpread(200)
+            );
+        }
+        geometry.setAttribute('position',
+            new THREE.Float32BufferAttribute(vertices, 3));
+        const material = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.8,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        snowSystem = new THREE.Points(geometry, material);
+        scene.add(snowSystem);
+    }
+
+    function addPhotoToScene(texture) {
+        const frameGeo = new THREE.BoxGeometry(1.3, 1.3, 0.05);
+        const frameMat = new THREE.MeshStandardMaterial({
+            color: CONFIG.colors.champagneGold,
+            metalness: 1.0,
+            roughness: 0.1
+        });
+        const frame = new THREE.Mesh(frameGeo, frameMat);
+
+        const photoGeo = new THREE.PlaneGeometry(1.2, 1.2);
+        const photoMat = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide
+        });
+        const photo = new THREE.Mesh(photoGeo, photoMat);
+        photo.position.z = 0.04;
+
+        const points = [];
+        points.push(new THREE.Vector3(0, 0.65, 0));
+        points.push(new THREE.Vector3(0, 2.0, 0));
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMat = new THREE.LineBasicMaterial({
+            color: 0xffdd88,
+            opacity: 0.8,
+            transparent: true
+        });
+        const line = new THREE.Line(lineGeo, lineMat);
+
+        const group = new THREE.Group();
+        group.add(frame);
+        group.add(photo);
+        group.add(line);
+
+        const s = 0.8;
+        group.scale.set(s, s, s);
+
+        photoMeshGroup.add(group);
+        particleSystem.push(new Particle(group, 'PHOTO', false));
+    }
+
+    function handleImageUpload(e) {
+        const files = e.target.files;
+        if (!files.length) return;
+
+        Array.from(files).forEach(f => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const imageUrl = ev.target.result;
+                loadedImageUrls.push(imageUrl);
+                new THREE.TextureLoader().load(imageUrl, (t) => {
+                    t.colorSpace = THREE.SRGBColorSpace;
+                    addPhotoToScene(t);
+                });
+            };
+            reader.readAsDataURL(f);
+        });
+
+        showAlert(`已挂载 ${files.length} 张照片`);
+    }
+
+    function showPhotoFromTree(url) {
+        const modal = document.getElementById('photo-modal');
+        const img = document.getElementById('modal-img');
+        img.src = url;
+
+        const xOffsetPercent = 50 + (Math.random() * 40 - 20);
+        const yOffsetPercent = 40 + (Math.random() * 30);
+
+        modal.style.setProperty('--tree-x', xOffsetPercent + '%');
+        modal.style.setProperty('--tree-y', yOffsetPercent + '%');
+
+        modal.classList.add('active');
+        modal.classList.remove('state-front');
+        modal.classList.add('state-hidden');
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                modal.classList.remove('state-hidden');
+                modal.classList.add('state-front');
+            });
+        });
+    }
+
+    function hidePhotoToTree(modal) {
+        modal.classList.remove('state-front');
+        modal.classList.add('state-hidden');
+    }
+
+    function changeModalImage() {
+        if (loadedImageUrls.length === 0) return;
+        currentImageIndex = (currentImageIndex + 1) % loadedImageUrls.length;
+        const url = loadedImageUrls[currentImageIndex];
+
+        photoReturnStarted = false;
+        showPhotoFromTree(url);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const dt = clock.getDelta();
+        const time = clock.elapsedTime;
+
+        if (snowSystem) {
+            const positions = snowSystem.geometry.attributes.position.array;
+            for (let i = 1; i < positions.length; i += 3) {
+                positions[i] -= 0.2;
+                if (positions[i] < -20) positions[i] = 100;
+            }
+            snowSystem.geometry.attributes.position.needsUpdate = true;
+        }
+
+        if (STATE.sequenceRunning) {
+            sequenceTimer += dt;
+            if (sequenceTimer < 3) {
+                STATE.mode = 'TREE';
+            } else {
+                STATE.mode = 'SCATTER';
+
+                if (loadedImageUrls.length === 0) {
+                    endSequence();
+                } else {
+                    const modal = document.getElementById('photo-modal');
+
+                    if (!STATE.isModalActive) {
+                        STATE.isModalActive = true;
+                        imagesShownCount = 0;
+                        currentImageIndex = -1;
+                        photoTimer = 0;
+                        photoReturnStarted = false;
+                        changeModalImage();
+                    } else {
+                        photoTimer += dt;
+
+                        const exitStart = CONFIG.photoInterval - CONFIG.photoExitDuration;
+
+                        if (!photoReturnStarted && photoTimer >= exitStart) {
+                            hidePhotoToTree(modal);
+                            photoReturnStarted = true;
+                        }
+
+                        if (photoTimer >= CONFIG.photoInterval) {
+                            photoTimer = 0;
+                            imagesShownCount++;
+                            photoReturnStarted = false;
+
+                            if (imagesShownCount >= loadedImageUrls.length) {
+                                endSequence();
+                            } else {
+                                changeModalImage();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let rotSpeedForTilt = 0;
+        if (STATE.mode === 'SCATTER') {
+            const extra = CTRL.rotateSpeed;
+            const dir = CTRL.rotateDir;
+            const speed = 0.1 + extra;
+
+            mainGroup.rotation.y += speed * dir * dt;
+            mainGroup.rotation.x += (0 - mainGroup.rotation.x) * 1.5 * dt;
+
+            rotSpeedForTilt = speed * dir;
+        } else {
+            mainGroup.rotation.y += 0.3 * dt;
+            mainGroup.rotation.x += (0 - mainGroup.rotation.x) * 2.0 * dt;
+            rotSpeedForTilt = 0;
+        }
+
+        STATE.rotationSpeedY = THREE.MathUtils.lerp(
+            STATE.rotationSpeedY,
+            rotSpeedForTilt,
+            dt * 5
+        );
+
+        particleSystem.forEach(p => p.update(dt, STATE.mode, time));
+        composer.render();
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+        adjustCameraPosition();
+    });
+
+    init();
+</script>
+</body>
+</html>
+<!--chenxinghan-->
